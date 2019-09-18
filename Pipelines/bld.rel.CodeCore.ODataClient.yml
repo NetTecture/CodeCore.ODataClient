@@ -1,4 +1,4 @@
-name: rel.OBB.Backend-$(date:yyyyMMdd)$(rev:.rr)
+name: rel.CodeCore.ODataClient-$(date:yyyyMMdd)$(rev:.rr)
 
 trigger:
   branches:
@@ -46,7 +46,7 @@ steps:
 - task: NuGetToolInstaller@0
   displayName: 'Use NuGet 4.x'
   inputs:
-    versionSpec: 4.x
+    versionSpec: 5.x
     checkLatest: true
 
 - task: NuGetCommand@2
