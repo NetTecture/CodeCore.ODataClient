@@ -69,7 +69,7 @@ steps:
     command: pack
     packagesToPack: '**/*.csproj'
     versioningScheme: byEnvVar
-    versionEnvVar: $(GitVersion.SemVer)
+    versionEnvVar: GitVersion.SemVer
 
 #- task: NuGetCommand@2
 #  inputs:
