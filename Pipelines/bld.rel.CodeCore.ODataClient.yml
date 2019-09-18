@@ -1,0 +1,80 @@
+name: rel.OBB.Backend-$(date:yyyyMMdd)$(rev:.rr)
+
+trigger:
+  branches:
+    include:
+      - dev/*
+      - env/*
+      - develop
+      - release
+      - master
+  paths:
+    include:
+      - Pipelines
+      - Source
+
+pool:
+  name: Hosted Windows 2019 with VS2019
+  demands: 
+    - msbuild
+    - visualstudio
+ 
+variables:
+  BuildPlatform: 'any cpu'
+  BuildConfiguration: 'release'
+
+steps:
+
+- task: GitVersion@4
+  displayName: 'GitVersion'
+  inputs:
+    updateAssemblyInfo: true
+    preferBundledVersion: false
+
+- script: echo %Action%%BuildVersion%
+  displayName: 'Set build version'
+  env:
+    Action: '##vso[build.updatebuildnumber]'
+    BuildVersion: $(GitVersion.SemVer)
+
+- task: DotNetCoreInstaller@0
+  displayName: 'Use .NET Core sdk $(DotNetCoreSdkVersion)'
+  inputs:
+    version: 2.x
+    includePreviewVersions: true
+
+- task: NuGetToolInstaller@0
+  displayName: 'Use NuGet 4.x'
+  inputs:
+    versionSpec: 4.x
+    checkLatest: true
+
+- task: NuGetCommand@2
+  displayName: 'NuGet restore'
+  inputs:
+    restoreSolution: Source.Backend/Backend.sln
+
+- task: VSBuild@1
+  displayName: 'Build solution Source.Backend/Backend.sln'
+  inputs:
+    solution: Source/*.sln
+    platform: '$(BuildPlatform)'
+    configuration: '$(BuildConfiguration)'
+    clean: true
+    maximumCpuCount: true
+    msbuildArchitecture: x64
+
+- task: NuGetCommand@2
+  inputs:
+    command: pack
+    packagesToPack: '**/*.csproj'
+    versioningScheme: byEnvVar
+    versionEnvVar: $(GitVersion.SemVer)
+
+#- task: NuGetCommand@2
+#  inputs:
+#    command: push
+#    nuGetFeedType: external
+#    publishFeedCredentials: '<Name of the NuGet service connection>'
+#    versioningScheme: byEnvVar
+#    versionEnvVar: $(GitVersion.SemVer)
