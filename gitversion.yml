@@ -6,5 +6,3 @@ branches:
     tag: beta
   develop:
     tag: alpha
-    mode: ContinuousDeployment
-ignore:
