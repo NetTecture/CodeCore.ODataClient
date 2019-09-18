@@ -1,0 +1,16 @@
+{
+  "id": "5c5e375b-56c4-420e-8c89-6a854b6aecee",
+  "name": "CodeCore.ODataClient Equipred Extendions",
+  "description": "Visual Studio Extensions required for development and running",
+  "version": "1.0",
+  "extensions": [
+    {
+      "name": "Extension Manager 2019",
+      "vsixId": "4a196712-2c3f-4730-ad1d-e7cda4185eb2"
+    },
+    {
+      "name": "SwitchStartupProject for VS 2019",
+      "vsixId": "399c17d5-6a98-44e4-938e-6d0f1f804076"
+    }
+  ]
+}
