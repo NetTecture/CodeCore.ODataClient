@@ -25,7 +25,7 @@ variables:
 
 steps:
 
-- task: GitVersion@4
+- task: GitVersion
   displayName: 'GitVersion'
   inputs:
     updateAssemblyInfo: true
@@ -37,24 +37,24 @@ steps:
     Action: '##vso[build.updatebuildnumber]'
     BuildVersion: $(GitVersion.SemVer)
 
-- task: DotNetCoreInstaller@0
+- task: DotNetCoreInstaller
   displayName: 'Use .NET Core sdk $(DotNetCoreSdkVersion)'
   inputs:
     version: 2.x
     includePreviewVersions: true
 
-- task: NuGetToolInstaller@0
+- task: NuGetToolInstaller
   displayName: 'Use NuGet 4.x'
   inputs:
     versionSpec: 4.x
     checkLatest: true
 
-- task: NuGetCommand@2
+- task: NuGetCommand
   displayName: 'NuGet restore'
   inputs:
     restoreSolution: Source.Backend/Backend.sln
 
-- task: VSBuild@1
+- task: VSBuild
   displayName: 'Build solution Source.Backend/Backend.sln'
   inputs:
     solution: Source/*.sln
@@ -64,7 +64,7 @@ steps:
     maximumCpuCount: true
     msbuildArchitecture: x64
 
-- task: NuGetCommand@2
+- task: NuGetCommand
   inputs:
     command: pack
     packagesToPack: '**/*.csproj'
