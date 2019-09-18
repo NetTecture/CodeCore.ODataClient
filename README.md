@@ -19,16 +19,18 @@ Missing features are added on an as needed basis. Pull requests are welcome. We 
 * In the root of the API project put a json file named "odataconfig.json".
 * The json file has the following format:
 
-    {
-        "output": "src/app/core/odata",
-        "services": [
-            {
-                "namespace": "odata.coreapi",
-                "metadata": "{url-to-$metadata}",
-                "contextName": "ODataCoreContext"
-            }
-        ]
-    }
+```json
+{
+    "output": "src/app/core/odata",
+    "services": [
+        {
+            "namespace": "odata.coreapi",
+            "metadata": "{url-to-$metadata}",
+            "contextName": "ODataCoreContext"
+        }
+    ]
+}
+```
 
 * It is possible to set up multiple services.
 * Start the command line with the command line. Make sure your current directory / work directory is the folder in which the odataconfig.json resides.
