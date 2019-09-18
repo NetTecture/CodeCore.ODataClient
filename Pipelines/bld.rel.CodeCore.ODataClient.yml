@@ -52,10 +52,10 @@ steps:
 - task: NuGetCommand@2
   displayName: 'NuGet restore'
   inputs:
-    restoreSolution: Source.Backend/Backend.sln
+    restoreSolution: Source/*.sln
 
 - task: VSBuild@1
-  displayName: 'Build solution Source.Backend/Backend.sln'
+  displayName: 'Build solution Source/*.sln'
   inputs:
     solution: Source/*.sln
     platform: '$(BuildPlatform)'
