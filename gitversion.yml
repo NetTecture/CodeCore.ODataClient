@@ -2,7 +2,11 @@ assembly-versioning-scheme: MajorMinorPatch
 branches:
   master:
     tag: ''
+  fix:
+    tag: rc
   release:
+    tag: beta
+  bug:
     tag: beta
   develop:
     tag: alpha

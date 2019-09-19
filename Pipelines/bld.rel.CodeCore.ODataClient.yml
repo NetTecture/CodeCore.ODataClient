@@ -38,7 +38,7 @@ steps:
     BuildVersion: $(GitVersion.SemVer)
 
 - task: DotNetCoreInstaller@2
-  displayName: 'Use .NET Core sdk $(DotNetCoreSdkVersion)'
+  displayName: 'Use .NET Core sdk'
   inputs:
     version: 2.x
     includePreviewVersions: true
@@ -65,6 +65,8 @@ steps:
     msbuildArchitecture: x64
 
 - task: NuGetCommand@2
+  displayName: 'NuGet pack'
+  condition: and(succeeded(), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/fix/'),startsWith(variables['Build.SourceBranch'], 'refs/heads/bug/')))
   inputs:
     command: pack
     packagesToPack: '**/*.csproj'
