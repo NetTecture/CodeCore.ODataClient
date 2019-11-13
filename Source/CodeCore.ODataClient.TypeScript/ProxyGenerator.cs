@@ -548,23 +548,17 @@ namespace CodeCore.ODataClient.TypeScript
                 this.StringBuilder.AppendLine();
                 // get
                 this.StringBuilder.AppendLine($"{prefix}\tGet(): {name}EntityGetOperation {{");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet entitySetUrl = this.settings.Url + this.definedname;");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet settings = this.settings;");
-                this.StringBuilder.AppendLine($"{prefix}\t\treturn new {name}EntityGetOperation(settings, entitySetUrl);");
+                this.StringBuilder.AppendLine($"{prefix}\t\treturn new {name}EntityGetOperation(this.settings, this.definedname);");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
                 // actions
                 this.StringBuilder.AppendLine($"{prefix}\tpublic Actions() {{");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet entitySetUrl = this.settings.Url + this.definedname;");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet settings = this.settings;");
-                this.StringBuilder.AppendLine($"{prefix}\t\treturn new {name}EntitySetActions(settings, entitySetUrl);");
+                this.StringBuilder.AppendLine($"{prefix}\t\treturn new {name}EntitySetActions(this.settings, this.definedname);");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
                 // functions
                 this.StringBuilder.AppendLine($"{prefix}\tpublic Functions() {{");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet entitySetUrl = this.settings.Url + this.definedname;");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet settings = this.settings;");
-                this.StringBuilder.AppendLine($"{prefix}\t\treturn new {name}EntitySetFunctions(settings, entitySetUrl);");
+                this.StringBuilder.AppendLine($"{prefix}\t\treturn new {name}EntitySetFunctions(this.settings, this.definedname);");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
 
