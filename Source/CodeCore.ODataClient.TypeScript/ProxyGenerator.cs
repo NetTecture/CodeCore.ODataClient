@@ -298,7 +298,7 @@ namespace CodeCore.ODataClient.TypeScript
                     this.StringBuilder.Append($" : Promise<{GetEdmTypeRefereceString(actionModel.ReturnType)}>");
                 }
                 this.StringBuilder.AppendLine($"{{");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet subscription = this.settings.http.post(this.baseUrl, JSON.stringify(this.request), {{");
+                this.StringBuilder.AppendLine($"{prefix}\t\tlet subscription = this.settings.http.post(this.getBaseUrl(), JSON.stringify(this.request), {{");
                 this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
                 this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
                 if (actionModel.ReturnType != null)
