@@ -768,17 +768,13 @@ namespace CodeCore.ODataClient.TypeScript
             // actions
 
             this.StringBuilder.AppendLine($"{prefix}\tpublic Actions() {{");
-            this.StringBuilder.AppendLine($"{prefix}\t\tlet entitySetUrl = this.ODataSettings.Url;");
-            this.StringBuilder.AppendLine($"{prefix}\t\tlet settings = this.ODataSettings;");
-            this.StringBuilder.AppendLine($"{prefix}\t\treturn new {contextName}ContainerActions(settings, entitySetUrl);");
+            this.StringBuilder.AppendLine($"{prefix}\t\treturn new {contextName}ContainerActions(this.ODataSettings, '');");
             this.StringBuilder.AppendLine($"{prefix}\t}}");
             this.StringBuilder.AppendLine();
             // functions
 
             this.StringBuilder.AppendLine($"{prefix}\tpublic Functions() {{");
-            this.StringBuilder.AppendLine($"{prefix}\t\tlet entitySetUrl = this.ODataSettings.Url;");
-            this.StringBuilder.AppendLine($"{prefix}\t\tlet settings = this.ODataSettings;");
-            this.StringBuilder.AppendLine($"{prefix}\t\treturn new {contextName}ContainerFunctions(settings, entitySetUrl);");
+            this.StringBuilder.AppendLine($"{prefix}\t\treturn new {contextName}ContainerFunctions(this.ODataSettings, '');");
             this.StringBuilder.AppendLine($"{prefix}\t}}");
             this.StringBuilder.AppendLine();
 
