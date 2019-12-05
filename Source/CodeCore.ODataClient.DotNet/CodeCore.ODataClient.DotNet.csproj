@@ -1,30 +1,23 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>latest</LangVersion>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
-    
+
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>codecore.odataclient.typescript</ToolCommandName>
+    <ToolCommandName>codecore.odataclient.dotnet</ToolCommandName>
     <Version>0.0.0</Version>
     <PackageProjectUrl>https://github.com/NetTecture/CodeCore.ODataClient</PackageProjectUrl>
     <RepositoryUrl></RepositoryUrl>
-    
+
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="TemplatesStatic\*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="TemplatesStatic\*" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.OData.Edm" Version="7.6.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="System.CodeDom" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
