@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using CodeCore.ODataClient.Abstract;
 
 namespace CodeCore.ODataClient.DotNet
 {
@@ -6,7 +9,7 @@ namespace CodeCore.ODataClient.DotNet
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            ProgramAbstract<ProxyGenerator>.RealMain(args);
         }
     }
 }

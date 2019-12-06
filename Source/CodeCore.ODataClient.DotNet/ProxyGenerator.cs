@@ -1,4 +1,6 @@
 ﻿using System;
+using System.CodeDom;
+using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -14,41 +16,56 @@ namespace CodeCore.ODataClient.DotNet
 
         protected override void PrepareTarget(bool initialize)
         {
+            if (initialize)
+            {
+                foreach (var file in Directory.EnumerateFiles(TargetPath))
+                {
+                    File.Delete(file);
+                }
+            }
+
+            CompileUnit = new CodeCompileUnit();
         }
+
+        protected CodeCompileUnit CompileUnit { get; set; }
 
         public override void Generate(string tsNamespace, string contextName)
         {
-            var outputPath = Path.Combine(TargetPath, $"{tsNamespace}.ts");
+            var outputPath = Path.Combine(TargetPath, $"{tsNamespace}.cs");
 
             GenerateHeaders();
-            this.StringBuilder.AppendLine();
             GenerateImportStatements();
-            this.StringBuilder.AppendLine();
 
-            var prefix1 = "";
-            GenerateEnumerations(prefix1);
-            GenerateComplexTypes(prefix1);
-            GenerateEntityTypes(prefix1);
-            GenerateActions(prefix1);
-            GenerateFunctions(prefix1);
-            GenerateEntitySets(prefix1);
-            GenerateContainer(prefix1, contextName);
+            //var prefix1 = "";
+            //GenerateEnumerations(prefix1);
+            //GenerateComplexTypes(prefix1);
+            //GenerateEntityTypes(prefix1);
+            //GenerateActions(prefix1);
+            //GenerateFunctions(prefix1);
+            //GenerateEntitySets(prefix1);
+            //GenerateContainer(prefix1, contextName);
 
-            var s = this.StringBuilder.ToString();
-            if (outputPath == default) {
-                Console.WriteLine(s);
-                return;
-            }
-            using (var sw = new StreamWriter(outputPath, false)) {
-                sw.Write(s);
+            CodeDomProvider provider = CodeDomProvider.CreateProvider("CSharp");
+            CodeGeneratorOptions options = new CodeGeneratorOptions();
+            options.BracingStyle = "C";
+            using (StreamWriter sourceWriter = new StreamWriter(outputPath))
+            {
+                provider.GenerateCodeFromCompileUnit(CompileUnit, sourceWriter, options);
+                CompileUnit = null;
             }
         }
 
         void GenerateHeaders()
         {
-            this.StringBuilder.AppendLine("// This is generated code. Do not add pr" +
-                "operties. If bugs need fixing, inform the author of the");
-            this.StringBuilder.AppendLine("// code generator to fix the bugs also in the backend.");
+            var codeNamespace = new CodeNamespace("blabla");
+            codeNamespace.Comments.Add(new CodeCommentStatement(
+                new CodeComment("This is generated code. Do not add properties. If bugs need fixing, inform the author of the")
+            ));
+            codeNamespace.Comments.Add(new CodeCommentStatement(
+                new CodeComment("code generator to fix the bugs also in the backend.")
+            ));
+            codeNamespace.Imports.Add(new CodeNamespaceImport("System"));
+            CompileUnit.Namespaces.Add(codeNamespace);
         }
 
         void GenerateImportStatements()
