@@ -14,6 +14,7 @@ namespace CodeCore.ODataClient.Abstract
         public void Initialize(string uri)
         {
             // Reset the generator
+            
             EdmModel = null;
             StringBuilder.Length = 0;
 

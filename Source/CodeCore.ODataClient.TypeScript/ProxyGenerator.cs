@@ -793,9 +793,9 @@ namespace CodeCore.ODataClient.TypeScript
 
         (string Name, bool Optional) GetPropertyTypeName (IEdmStructuralProperty property, string forNamespace)
         {
-            var retval = String.Empty;
             var optional = false;
 
+            string retval;
             switch (property.Type.Definition)
             {
                 case IEdmCollectionType ct:
@@ -815,6 +815,9 @@ namespace CodeCore.ODataClient.TypeScript
                             case IEdmTypeReference inner:
                                 {
                                     retval = inner.AsTypeDefinition().FullName();
+                                    if (ct.TypeKind == EdmTypeKind.Collection) {
+                                        retval = retval + "[]";
+                                    }
                                     if (retval.StartsWith("Edm.")) { System.Diagnostics.Debugger.Break(); }
                                     optional = true;
                                 }
@@ -823,7 +826,7 @@ namespace CodeCore.ODataClient.TypeScript
                                 {
                                     throw new NotImplementedException("Not prepared for property of this kind.");
                                 }
-                        }                        
+                        }
                     }
                     break;
                 case IEdmEnumType et:
