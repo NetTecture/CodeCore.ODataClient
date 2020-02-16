@@ -83,7 +83,7 @@ namespace CodeCore.ODataClient.TypeScript
             this.StringBuilder.AppendLine($"\tODataLiteral, ODataType,");
             this.StringBuilder.AppendLine($"\tODataContext, ODataSettings, ODataEntitySet,");
             this.StringBuilder.AppendLine($"\tODataOperationSet, ODataActionOperation, ODataFunctionOperation, ODataFunctionSetOperation, ODataGetOperation,");
-            this.StringBuilder.AppendLine($"\tODataQueryResult");
+            this.StringBuilder.AppendLine($"\tODataQueryResult, ODataScalarResult");
             this.StringBuilder.AppendLine($"}} from './odataclient';");
         }
 
@@ -220,10 +220,6 @@ namespace CodeCore.ODataClient.TypeScript
         {
             foreach (var actionModel in EdmModel.SchemaElements.OrderBy(x => x.Name).OfType<IEdmAction>().Where(x=>x.IsAction()))
             {
-                //if (actionModel.Name.StartsWith("Geo"))
-                //{
-                //    System.Diagnostics.Debugger.Break();
-                //}
                 var name = $"{actionModel.Name}In{actionModel.Namespace}";
                 var nameInUrl = $"{actionModel.Namespace}.{actionModel.Name}";
                 if (actionModel.IsBound)
@@ -326,6 +322,10 @@ namespace CodeCore.ODataClient.TypeScript
         {
             foreach (var actionModel in EdmModel.SchemaElements.OrderBy(x => x.Name).OfType<IEdmFunction>().Where(x => x.IsFunction()))
             {
+                //if (actionModel.Name.Contains("EncodeValue")) {
+                //    System.Diagnostics.Debugger.Break();
+                //}
+
                 var name = $"{actionModel.Name}In{actionModel.Namespace}";
                 var nameInUrl = $"{actionModel.Namespace}.{actionModel.Name}";
                 if (actionModel.IsBound)
@@ -431,20 +431,21 @@ namespace CodeCore.ODataClient.TypeScript
                 this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
                 this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
                 this.StringBuilder.AppendLine($"{prefix}\t\t}}).pipe(map(a => {{");
-                this.StringBuilder.Append($"{prefix}\t\t\treturn a as ");
                 switch (actionModel.ReturnType.Definition.TypeKind)
                 {
                     case EdmTypeKind.Collection:
+                        this.StringBuilder.Append($"{prefix}\t\t\treturn a as ");
                         var am = actionModel.ReturnType.Definition;
                         var rt = am.AsElementType();
                         var collectionReturnType = rt.FullTypeName();
-                        this.StringBuilder.Append($"ODataQueryResult<{collectionReturnType}>");
+                        this.StringBuilder.AppendLine($"ODataQueryResult<{collectionReturnType}>;");
                         break;
                     default:
-                        this.StringBuilder.Append(GetEdmTypeRefereceString(actionModel.ReturnType));
+                        this.StringBuilder.Append($"{prefix}\t\t\tvar response = a as ");
+                        this.StringBuilder.AppendLine($"ODataScalarResult<{GetEdmTypeRefereceString(actionModel.ReturnType)}>;");
+                        this.StringBuilder.AppendLine($"{prefix}\t\t\treturn response.Value;");
                         break;
                 }
-                this.StringBuilder.AppendLine($";");
                 this.StringBuilder.AppendLine($"{prefix}\t\t}}));");
                 this.StringBuilder.AppendLine($"{prefix}\t\treturn subscription.toPromise();");
                 //if (actionModel.ReturnType == null)
