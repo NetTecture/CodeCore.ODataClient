@@ -248,7 +248,13 @@ namespace CodeCore.ODataClient.TypeScript
                 this.StringBuilder.AppendLine($"{prefix}export class {name} extends ODataActionOperation {{");
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.AppendLine($"{prefix}\tconstructor(settings: ODataSettings, url: string) {{");
-                this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '/{nameInUrl}');");
+                if (actionModel.IsBound)
+                {
+                    this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '/{nameInUrl}');");
+                } else
+                {
+                    this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '{nameInUrl}');");
+                }
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.AppendLine($"{prefix}\trequest: object = {{}};");
@@ -365,7 +371,13 @@ namespace CodeCore.ODataClient.TypeScript
                 }
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.AppendLine($"{prefix}\tconstructor(settings: ODataSettings, url: string) {{");
-                this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '/{nameInUrl}');");
+                if (actionModel.IsBound)
+                {
+                    this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '/{nameInUrl}');");
+                } else
+                {
+                    this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '{nameInUrl}');");
+                }
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.Append($"{prefix}\tpublic Parameters(");
@@ -427,27 +439,26 @@ namespace CodeCore.ODataClient.TypeScript
                 }
                 this.StringBuilder.AppendLine($" {{");
                 this.StringBuilder.AppendLine($"{prefix}\t\tvar url = this.getBaseUrl();");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet subscription = this.settings.http.get(url, {{");
+                this.StringBuilder.AppendLine($"{prefix}\t\tlet respData = await this.settings.http.get(url, {{");
                 this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
                 this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
-                this.StringBuilder.AppendLine($"{prefix}\t\t}}).pipe(map(a => {{");
+                this.StringBuilder.AppendLine($"{prefix}\t\t}}).toPromise();");
                 switch (actionModel.ReturnType.Definition.TypeKind)
                 {
                     case EdmTypeKind.Collection:
-                        this.StringBuilder.Append($"{prefix}\t\t\treturn a as ");
+                        this.StringBuilder.Append($"{prefix}\t\tlet resp = respData as ");
                         var am = actionModel.ReturnType.Definition;
                         var rt = am.AsElementType();
                         var collectionReturnType = rt.FullTypeName();
                         this.StringBuilder.AppendLine($"ODataQueryResult<{collectionReturnType}>;");
+                        this.StringBuilder.AppendLine($"{prefix}\t\treturn resp;");
                         break;
                     default:
-                        this.StringBuilder.Append($"{prefix}\t\t\tvar response = a as ");
+                        this.StringBuilder.Append($"{prefix}\t\tlet resp = respData as ");
                         this.StringBuilder.AppendLine($"ODataScalarResult<{GetEdmTypeRefereceString(actionModel.ReturnType)}>;");
-                        this.StringBuilder.AppendLine($"{prefix}\t\t\treturn response.Value;");
+                        this.StringBuilder.AppendLine($"{prefix}\t\treturn resp.Value;");
                         break;
                 }
-                this.StringBuilder.AppendLine($"{prefix}\t\t}}));");
-                this.StringBuilder.AppendLine($"{prefix}\t\treturn subscription.toPromise();");
                 //if (actionModel.ReturnType == null)
                 //{
                 //    this.StringBuilder.AppendLine($"{prefix}\t\treturn;");
