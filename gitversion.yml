@@ -1,0 +1,21 @@
+assembly-versioning-scheme: MajorMinorPatch
+branches:
+  master:
+    regex: master
+    tag: ''
+    is-release-branch: true
+  fix:
+    regex: fix[/-]
+    tag: fix-ci
+  release:
+    regex: release
+    tag: beta
+  bug:
+    regex: bug[/-]
+    tag: beta-ci
+  develop:
+    regex: develop
+    tag: alpha
+  dev:
+    regex: dev[/-]
+    tag: dev-ci

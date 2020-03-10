@@ -1,4 +1,6 @@
 ﻿using System;
+using System.CodeDom;
+using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -7,82 +9,74 @@ using System.Xml;
 using CodeCore.ODataClient.Abstract;
 using Microsoft.OData.Edm;
 
-namespace CodeCore.ODataClient.TypeScript
+namespace CodeCore.ODataClient.DotNet
 {
     class ProxyGenerator : ProxyGeneratorBase
     {
 
         protected override void PrepareTarget(bool initialize)
         {
-            string outputPath = TargetPath;
-            // Header
-            var assembly = Assembly.GetAssembly(typeof(ProxyGenerator));
-            var assemblyName = assembly.GetName().Name;
-
-            var prefix = $"{assemblyName}.TemplatesStatic.";
-            var streams = assembly.GetManifestResourceNames();
-            if (initialize) {
-                foreach (var file in Directory.EnumerateFiles(outputPath)) {
+            if (initialize)
+            {
+                foreach (var file in Directory.EnumerateFiles(TargetPath))
+                {
                     File.Delete(file);
                 }
-                foreach (var templateName in streams.Where(x => x.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))) {
-                    var file = String.Empty;
-                    var name = templateName.Substring(prefix.Length);
-                    if (name.StartsWith("_")) {
-                        // We ignore files that start with _ - we use that for temp files that should not be deployed atm.
-                        continue;
-                    }
-                    using (var resourceStream = assembly.GetManifestResourceStream(templateName))
-                    using (var fileStream = new System.IO.FileStream(Path.Combine(outputPath, name), FileMode.Create)) {
-                        resourceStream.CopyTo(fileStream);
-                    }
-                }
             }
+
+            CompileUnit = new CodeCompileUnit();
         }
+
+        protected CodeCompileUnit CompileUnit { get; set; }
 
         public override void Generate(string tsNamespace, string contextName)
         {
-            var outputPath = Path.Combine(TargetPath, $"{tsNamespace}.ts");
+            var outputPath = Path.Combine(TargetPath, $"{tsNamespace}.cs");
 
             GenerateHeaders();
-            this.StringBuilder.AppendLine();
             GenerateImportStatements();
-            this.StringBuilder.AppendLine();
 
-            var prefix1 = "";
-            GenerateEnumerations(prefix1);
-            GenerateComplexTypes(prefix1);
-            GenerateEntityTypes(prefix1);
-            GenerateActions(prefix1);
-            GenerateFunctions(prefix1);
-            GenerateEntitySets(prefix1);
-            GenerateContainer(prefix1, contextName);
+            //var prefix1 = "";
+            //GenerateEnumerations(prefix1);
+            //GenerateComplexTypes(prefix1);
+            //GenerateEntityTypes(prefix1);
+            //GenerateActions(prefix1);
+            //GenerateFunctions(prefix1);
+            //GenerateEntitySets(prefix1);
+            //GenerateContainer(prefix1, contextName);
 
-            var s = this.StringBuilder.ToString();
-            if (outputPath == default) {
-                Console.WriteLine(s);
-                return;
-            }
-            using (var sw = new StreamWriter(outputPath, false)) {
-                sw.Write(s);
+            CodeDomProvider provider = CodeDomProvider.CreateProvider("CSharp");
+            CodeGeneratorOptions options = new CodeGeneratorOptions();
+            options.BracingStyle = "C";
+            using (StreamWriter sourceWriter = new StreamWriter(outputPath))
+            {
+                provider.GenerateCodeFromCompileUnit(CompileUnit, sourceWriter, options);
+                CompileUnit = null;
             }
         }
 
         void GenerateHeaders()
         {
-            this.StringBuilder.AppendLine("// This is generated code. Do not add pr" +
-                "operties. If bugs need fixing, inform the author of the");
-            this.StringBuilder.AppendLine("// code generator to fix the bugs also in the backend.");
+            var codeNamespace = new CodeNamespace("blabla");
+            codeNamespace.Comments.Add(new CodeCommentStatement(
+                new CodeComment("This is generated code. Do not add properties. If bugs need fixing, inform the author of the")
+            ));
+            codeNamespace.Comments.Add(new CodeCommentStatement(
+                new CodeComment("code generator to fix the bugs also in the backend.")
+            ));
+            codeNamespace.Imports.Add(new CodeNamespaceImport("System"));
+            CompileUnit.Namespaces.Add(codeNamespace);
         }
 
         void GenerateImportStatements()
         {
             this.StringBuilder.AppendLine($"import {{ Injectable }} from '@angular/core';");
+            this.StringBuilder.AppendLine($"import {{ map }} from 'rxjs/operators';");
             this.StringBuilder.AppendLine($"import {{");
             this.StringBuilder.AppendLine($"\tODataLiteral, ODataType,");
             this.StringBuilder.AppendLine($"\tODataContext, ODataSettings, ODataEntitySet,");
             this.StringBuilder.AppendLine($"\tODataOperationSet, ODataActionOperation, ODataFunctionOperation, ODataFunctionSetOperation, ODataGetOperation,");
-            this.StringBuilder.AppendLine($"\tODataQueryResult, ODataScalarResult");
+            this.StringBuilder.AppendLine($"\tODataQueryResult");
             this.StringBuilder.AppendLine($"}} from './odataclient';");
         }
 
@@ -219,6 +213,10 @@ namespace CodeCore.ODataClient.TypeScript
         {
             foreach (var actionModel in EdmModel.SchemaElements.OrderBy(x => x.Name).OfType<IEdmAction>().Where(x=>x.IsAction()))
             {
+                //if (actionModel.Name.StartsWith("Geo"))
+                //{
+                //    System.Diagnostics.Debugger.Break();
+                //}
                 var name = $"{actionModel.Name}In{actionModel.Namespace}";
                 var nameInUrl = $"{actionModel.Namespace}.{actionModel.Name}";
                 if (actionModel.IsBound)
@@ -247,13 +245,7 @@ namespace CodeCore.ODataClient.TypeScript
                 this.StringBuilder.AppendLine($"{prefix}export class {name} extends ODataActionOperation {{");
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.AppendLine($"{prefix}\tconstructor(settings: ODataSettings, url: string) {{");
-                if (actionModel.IsBound)
-                {
-                    this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '/{nameInUrl}');");
-                } else
-                {
-                    this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '{nameInUrl}');");
-                }
+                this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '/{nameInUrl}');");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.AppendLine($"{prefix}\trequest: object = {{}};");
@@ -293,27 +285,29 @@ namespace CodeCore.ODataClient.TypeScript
                 this.StringBuilder.AppendLine($"{prefix}\t\treturn this;");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
-                this.StringBuilder.Append($"{prefix}\tpublic Execute()");
+                this.StringBuilder.Append($"{prefix}\tpublic async Execute() ");
                 if (actionModel.ReturnType != null)
                 {
-                    this.StringBuilder.AppendLine($" : Promise<{GetEdmTypeRefereceString(actionModel.ReturnType)}> {{");
-                } else
-                {
-                    this.StringBuilder.AppendLine($" : Promise<any> {{");
+                    this.StringBuilder.Append($" : Promise<{GetEdmTypeRefereceString(actionModel.ReturnType)}>");
                 }
-                if (actionModel.ReturnType != null)
-                {
-                    this.StringBuilder.AppendLine($"{prefix}\t\treturn this.settings.http.post<{GetEdmTypeRefereceString(actionModel.ReturnType)}>(this.getBaseUrl(), JSON.stringify(this.request),");
-                } else
-                {
-                    this.StringBuilder.AppendLine($"{prefix}\t\treturn this.settings.http.post(this.getBaseUrl(), JSON.stringify(this.request),");
-                }
-                this.StringBuilder.AppendLine($"{prefix}\t\t{{");
+                this.StringBuilder.AppendLine($"{{");
+                this.StringBuilder.AppendLine($"{prefix}\t\tlet subscription = this.settings.http.post(this.getBaseUrl(), JSON.stringify(this.request), {{");
                 this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
                 this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
-                this.StringBuilder.AppendLine($"{prefix}\t\t}})");
-                this.StringBuilder.AppendLine($"{prefix}\t\t.toPromise();");
-
+                if (actionModel.ReturnType != null)
+                {
+                    this.StringBuilder.AppendLine($"{prefix}\t\t}}).pipe(map(a => {{");
+                    this.StringBuilder.Append($"{prefix}\t\t\treturn");
+                    this.StringBuilder.Append($" a as {GetEdmTypeRefereceString(actionModel.ReturnType)}");
+                    this.StringBuilder.AppendLine($";");
+                    this.StringBuilder.AppendLine($"{prefix}\t\t}}));");
+                    this.StringBuilder.AppendLine($"{prefix}\t\treturn subscription.toPromise();");
+                } else
+                {
+                    this.StringBuilder.AppendLine($"{prefix}\t\t}});");
+                    this.StringBuilder.AppendLine($"{prefix}\t\treturn subscription.toPromise();");
+                }
+                
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.AppendLine($"}}");
@@ -325,10 +319,6 @@ namespace CodeCore.ODataClient.TypeScript
         {
             foreach (var actionModel in EdmModel.SchemaElements.OrderBy(x => x.Name).OfType<IEdmFunction>().Where(x => x.IsFunction()))
             {
-                //if (actionModel.Name.Contains("EncodeValue")) {
-                //    System.Diagnostics.Debugger.Break();
-                //}
-
                 var name = $"{actionModel.Name}In{actionModel.Namespace}";
                 var nameInUrl = $"{actionModel.Namespace}.{actionModel.Name}";
                 if (actionModel.IsBound)
@@ -368,13 +358,7 @@ namespace CodeCore.ODataClient.TypeScript
                 }
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.AppendLine($"{prefix}\tconstructor(settings: ODataSettings, url: string) {{");
-                if (actionModel.IsBound)
-                {
-                    this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '/{nameInUrl}');");
-                } else
-                {
-                    this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '{nameInUrl}');");
-                }
+                this.StringBuilder.AppendLine($"{prefix}\t\tsuper(settings, url + '/{nameInUrl}');");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.Append($"{prefix}\tpublic Parameters(");
@@ -416,11 +400,10 @@ namespace CodeCore.ODataClient.TypeScript
                 this.StringBuilder.AppendLine($"{prefix}\t\treturn this;");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
-                this.StringBuilder.Append($"{prefix}\tpublic Execute()");
-                this.StringBuilder.Append(": Promise<");
+                this.StringBuilder.Append($"{prefix}\tpublic async Execute()");
                 if (actionModel.ReturnType != null)
                 {
-                    
+                    this.StringBuilder.Append(": Promise<");
                     switch (actionModel.ReturnType.Definition.TypeKind)
                     {
                         case EdmTypeKind.Collection:
@@ -433,14 +416,15 @@ namespace CodeCore.ODataClient.TypeScript
                             this.StringBuilder.Append(GetEdmTypeRefereceString(actionModel.ReturnType));
                             break;
                     }
-                    
-                } else
-                {
-                    StringBuilder.Append("any");
+                    this.StringBuilder.Append(">");
                 }
-                this.StringBuilder.AppendLine($"> {{");
+                this.StringBuilder.AppendLine($" {{");
                 this.StringBuilder.AppendLine($"{prefix}\t\tvar url = this.getBaseUrl();");
-                this.StringBuilder.Append($"{prefix}\t\treturn this.settings.http.get<");
+                this.StringBuilder.AppendLine($"{prefix}\t\tlet subscription = this.settings.http.get(url, {{");
+                this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
+                this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
+                this.StringBuilder.AppendLine($"{prefix}\t\t}}).pipe(map(a => {{");
+                this.StringBuilder.Append($"{prefix}\t\t\treturn a as ");
                 switch (actionModel.ReturnType.Definition.TypeKind)
                 {
                     case EdmTypeKind.Collection:
@@ -453,14 +437,9 @@ namespace CodeCore.ODataClient.TypeScript
                         this.StringBuilder.Append(GetEdmTypeRefereceString(actionModel.ReturnType));
                         break;
                 }
-                this.StringBuilder.AppendLine($">(url,");
-                this.StringBuilder.AppendLine($"{prefix}\t\t{{");
-
-                this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
-                this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
-                this.StringBuilder.AppendLine($"{prefix}\t\t}})");
-                this.StringBuilder.AppendLine($"{prefix}\t\t.toPromise();");
-
+                this.StringBuilder.AppendLine($";");
+                this.StringBuilder.AppendLine($"{prefix}\t\t}}));");
+                this.StringBuilder.AppendLine($"{prefix}\t\treturn subscription.toPromise();");
                 //if (actionModel.ReturnType == null)
                 //{
                 //    this.StringBuilder.AppendLine($"{prefix}\t\treturn;");
@@ -807,9 +786,9 @@ namespace CodeCore.ODataClient.TypeScript
 
         (string Name, bool Optional) GetPropertyTypeName (IEdmStructuralProperty property, string forNamespace)
         {
+            var retval = String.Empty;
             var optional = false;
 
-            string retval;
             switch (property.Type.Definition)
             {
                 case IEdmCollectionType ct:
@@ -829,9 +808,6 @@ namespace CodeCore.ODataClient.TypeScript
                             case IEdmTypeReference inner:
                                 {
                                     retval = inner.AsTypeDefinition().FullName();
-                                    if (ct.TypeKind == EdmTypeKind.Collection) {
-                                        retval = retval + "[]";
-                                    }
                                     if (retval.StartsWith("Edm.")) { System.Diagnostics.Debugger.Break(); }
                                     optional = true;
                                 }
@@ -840,7 +816,7 @@ namespace CodeCore.ODataClient.TypeScript
                                 {
                                     throw new NotImplementedException("Not prepared for property of this kind.");
                                 }
-                        }
+                        }                        
                     }
                     break;
                 case IEdmEnumType et:
