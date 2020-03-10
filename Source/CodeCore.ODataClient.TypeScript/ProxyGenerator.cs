@@ -78,7 +78,6 @@ namespace CodeCore.ODataClient.TypeScript
         void GenerateImportStatements()
         {
             this.StringBuilder.AppendLine($"import {{ Injectable }} from '@angular/core';");
-            this.StringBuilder.AppendLine($"import {{ map }} from 'rxjs/operators';");
             this.StringBuilder.AppendLine($"import {{");
             this.StringBuilder.AppendLine($"\tODataLiteral, ODataType,");
             this.StringBuilder.AppendLine($"\tODataContext, ODataSettings, ODataEntitySet,");
@@ -294,29 +293,27 @@ namespace CodeCore.ODataClient.TypeScript
                 this.StringBuilder.AppendLine($"{prefix}\t\treturn this;");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
-                this.StringBuilder.Append($"{prefix}\tpublic async Execute() ");
+                this.StringBuilder.Append($"{prefix}\tpublic Execute()");
                 if (actionModel.ReturnType != null)
                 {
-                    this.StringBuilder.Append($" : Promise<{GetEdmTypeRefereceString(actionModel.ReturnType)}>");
-                }
-                this.StringBuilder.AppendLine($"{{");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet subscription = this.settings.http.post(this.getBaseUrl(), JSON.stringify(this.request), {{");
-                this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
-                this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
-                if (actionModel.ReturnType != null)
-                {
-                    this.StringBuilder.AppendLine($"{prefix}\t\t}}).pipe(map(a => {{");
-                    this.StringBuilder.Append($"{prefix}\t\t\treturn");
-                    this.StringBuilder.Append($" a as {GetEdmTypeRefereceString(actionModel.ReturnType)}");
-                    this.StringBuilder.AppendLine($";");
-                    this.StringBuilder.AppendLine($"{prefix}\t\t}}));");
-                    this.StringBuilder.AppendLine($"{prefix}\t\treturn subscription.toPromise();");
+                    this.StringBuilder.AppendLine($" : Promise<{GetEdmTypeRefereceString(actionModel.ReturnType)}> {{");
                 } else
                 {
-                    this.StringBuilder.AppendLine($"{prefix}\t\t}});");
-                    this.StringBuilder.AppendLine($"{prefix}\t\treturn subscription.toPromise();");
+                    this.StringBuilder.AppendLine($" : Promise<any> {{");
                 }
-                
+                if (actionModel.ReturnType != null)
+                {
+                    this.StringBuilder.AppendLine($"{prefix}\t\treturn this.settings.http.post<{GetEdmTypeRefereceString(actionModel.ReturnType)}>(this.getBaseUrl(), JSON.stringify(this.request),");
+                } else
+                {
+                    this.StringBuilder.AppendLine($"{prefix}\t\treturn this.settings.http.post(this.getBaseUrl(), JSON.stringify(this.request),");
+                }
+                this.StringBuilder.AppendLine($"{prefix}\t\t{{");
+                this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
+                this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
+                this.StringBuilder.AppendLine($"{prefix}\t\t}})");
+                this.StringBuilder.AppendLine($"{prefix}\t\t.toPromise();");
+
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
                 this.StringBuilder.AppendLine($"}}");
@@ -419,10 +416,11 @@ namespace CodeCore.ODataClient.TypeScript
                 this.StringBuilder.AppendLine($"{prefix}\t\treturn this;");
                 this.StringBuilder.AppendLine($"{prefix}\t}}");
                 this.StringBuilder.AppendLine();
-                this.StringBuilder.Append($"{prefix}\tpublic async Execute()");
+                this.StringBuilder.Append($"{prefix}\tpublic Execute()");
+                this.StringBuilder.Append(": Promise<");
                 if (actionModel.ReturnType != null)
                 {
-                    this.StringBuilder.Append(": Promise<");
+                    
                     switch (actionModel.ReturnType.Definition.TypeKind)
                     {
                         case EdmTypeKind.Collection:
@@ -435,30 +433,34 @@ namespace CodeCore.ODataClient.TypeScript
                             this.StringBuilder.Append(GetEdmTypeRefereceString(actionModel.ReturnType));
                             break;
                     }
-                    this.StringBuilder.Append(">");
+                    
+                } else
+                {
+                    StringBuilder.Append("any");
                 }
-                this.StringBuilder.AppendLine($" {{");
+                this.StringBuilder.AppendLine($"> {{");
                 this.StringBuilder.AppendLine($"{prefix}\t\tvar url = this.getBaseUrl();");
-                this.StringBuilder.AppendLine($"{prefix}\t\tlet respData = await this.settings.http.get(url, {{");
-                this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
-                this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
-                this.StringBuilder.AppendLine($"{prefix}\t\t}}).toPromise();");
+                this.StringBuilder.Append($"{prefix}\t\treturn this.settings.http.get<");
                 switch (actionModel.ReturnType.Definition.TypeKind)
                 {
                     case EdmTypeKind.Collection:
-                        this.StringBuilder.Append($"{prefix}\t\tlet resp = respData as ");
                         var am = actionModel.ReturnType.Definition;
                         var rt = am.AsElementType();
                         var collectionReturnType = rt.FullTypeName();
-                        this.StringBuilder.AppendLine($"ODataQueryResult<{collectionReturnType}>;");
-                        this.StringBuilder.AppendLine($"{prefix}\t\treturn resp;");
+                        this.StringBuilder.Append($"ODataQueryResult<{collectionReturnType}>");
                         break;
                     default:
-                        this.StringBuilder.Append($"{prefix}\t\tlet resp = respData as ");
-                        this.StringBuilder.AppendLine($"ODataScalarResult<{GetEdmTypeRefereceString(actionModel.ReturnType)}>;");
-                        this.StringBuilder.AppendLine($"{prefix}\t\treturn resp.Value;");
+                        this.StringBuilder.Append(GetEdmTypeRefereceString(actionModel.ReturnType));
                         break;
                 }
+                this.StringBuilder.AppendLine($">(url,");
+                this.StringBuilder.AppendLine($"{prefix}\t\t{{");
+
+                this.StringBuilder.AppendLine($"{prefix}\t\t\twithCredentials: false,");
+                this.StringBuilder.AppendLine($"{prefix}\t\t\theaders: this.settings.headers,");
+                this.StringBuilder.AppendLine($"{prefix}\t\t}})");
+                this.StringBuilder.AppendLine($"{prefix}\t\t.toPromise();");
+
                 //if (actionModel.ReturnType == null)
                 //{
                 //    this.StringBuilder.AppendLine($"{prefix}\t\treturn;");
